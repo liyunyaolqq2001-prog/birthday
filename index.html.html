@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>THE ARANYA CHRONICLES</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --text-color: #e0e0e0;
+            --accent-color: #ffffff;
+            --dim-color: #444;
+            --success-color: #00ff00;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+            overscroll-behavior: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid var(--dim-color);
+            padding: 30px;
+            position: relative;
+            background: rgba(10, 10, 10, 0.95);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+            min-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .decoration-line { position: absolute; background: var(--dim-color); }
+        .line-top { top: 10px; left: 10px; right: 10px; height: 1px; }
+        .line-bottom { bottom: 10px; left: 10px; right: 10px; height: 1px; }
+
+        h1 {
+            font-size: 1.1rem;
+            text-align: center;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--dim-color);
+            padding-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .page-section { display: none; animation: fadeIn 0.8s ease; width: 100%; }
+        .active-section { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* BUTTONS */
+        .btn-start {
+            display: block; width: 100%; padding: 15px;
+            background: transparent; border: 1px solid var(--text-color);
+            color: var(--text-color); font-family: var(--font-main);
+            cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
+            transition: all 0.3s; margin-top: 20px; text-align: center; text-decoration: none;
+            font-weight: bold;
+        }
+        .btn-start:hover { background: var(--text-color); color: var(--bg-color); }
+
+        /* BACK BUTTON (NEW) */
+        .btn-back {
+            display: block; width: 100%; padding: 10px;
+            background: transparent; border: none;
+            color: #666; font-family: var(--font-main);
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+            font-size: 0.75rem; margin-top: 25px;
+            border-top: 1px dashed #333;
+        }
+        .btn-back:hover { color: #fff; }
+
+        /* SHARE BUTTON (NEW) */
+        .btn-share {
+            position: absolute; top: 10px; right: 10px;
+            border: 1px solid #333; background: #000; color: #888;
+            padding: 5px 10px; font-size: 0.7rem; cursor: pointer;
+            font-family: var(--font-main); z-index: 50;
+        }
+        .btn-share:hover { border-color: #fff; color: #fff; }
+
+        /* MAP PAGE STYLES */
+        .map-container { width: 100%; display: flex; flex-direction: column; align-items: center; }
+        .map-placeholder {
+            width: 100%; height: 350px; background: #111;
+            display: flex; justify-content: center; align-items: center;
+            border: 1px dashed var(--dim-color); margin-bottom: 10px;
+            color: #555; font-size: 0.8rem; text-align: center; padding: 20px;
+            overflow: hidden;
+        }
+        .map-img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+        /* QUADRANTS */
+        .quadrant-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .quadrant { border: 1px solid var(--dim-color); padding: 15px; font-size: 0.75rem; display: flex; flex-direction: column; justify-content: flex-start; }
+        .quadrant h3 { margin-bottom: 10px; color: var(--accent-color); border-bottom: 1px solid #333; padding-bottom: 5px; font-size: 0.8rem; letter-spacing: 1px; }
+        .quadrant p { line-height: 1.8; color: #ccc; }
+
+        /* INPUTS */
+        .input-area { text-align: center; margin-top: 20px; }
+        input[type="text"] {
+            background: transparent; border: none; border-bottom: 2px solid var(--text-color);
+            color: var(--text-color); font-family: var(--font-main); font-size: 1.5rem;
+            text-align: center; width: 200px; outline: none; text-transform: uppercase;
+        }
+
+        /* ARCHIVE LIST */
+        .chapter-list { list-style: none; margin-top: 20px; }
+        .chapter-item {
+            border: 1px solid var(--dim-color); margin-bottom: 10px; padding: 15px;
+            cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+        }
+        .chapter-item:hover { background: #1a1a1a; border-color: var(--text-color); }
+        .chapter-item.locked { opacity: 0.5; cursor: not-allowed; border-style: dashed; }
+        .chapter-item.unlocked { border-color: var(--success-color); background: rgba(0,255,0,0.05); }
+        .status { font-size: 0.7rem; border: 1px solid var(--text-color); padding: 2px 5px; }
+
+        /* MODALS */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 100; padding: 20px; overflow-y: auto; }
+        .modal-content { max-width: 600px; margin: 0 auto; padding-top: 40px; padding-bottom: 40px; position: relative; }
+        .close-btn { position: absolute; top: 10px; right: 10px; font-size: 2rem; cursor: pointer; color: #fff; z-index: 101; }
+        
+        .puzzle-visual { margin: 20px 0; border: 1px solid #333; padding: 20px; text-align: center; position: relative; overflow: hidden; }
+        
+        /* --- CH2: 时空同心锁 --- */
+        .chrono-lock {
+            width: 280px; height: 280px; margin: 0 auto 30px auto; position: relative;
+            display: flex; justify-content: center; align-items: center; border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,20,20,1) 0%, rgba(0,0,0,1) 70%);
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+        .ring {
+            position: absolute; border-radius: 50%; border: 1px solid #333;
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.5s;
+        }
+        .ring::after {
+            content: ''; position: absolute; top: -4px; left: 50%; transform: translateX(-50%);
+            width: 6px; height: 6px; background: #555; border-radius: 50%; box-shadow: 0 0 5px #000;
+        }
+        .chrono-lock.unlocked .ring { border-color: var(--success-color); box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); }
+        .chrono-lock.unlocked .ring::after { background: var(--success-color); box-shadow: 0 0 10px var(--success-color); }
+        .chrono-lock.unlocked .lock-core { border-color: var(--success-color); color: var(--success-color); text-shadow: 0 0 10px var(--success-color); }
+        .ring-outer { width: 90%; height: 90%; z-index: 1; border-style: dashed; border-width: 1px; }
+        .ring-middle { width: 65%; height: 65%; z-index: 2; border-width: 2px; }
+        .ring-inner { width: 40%; height: 40%; z-index: 3; border-style: dotted; border-width: 2px; }
+        .lock-core {
+            width: 18%; height: 18%; background: #000; border: 1px solid #444; border-radius: 50%; z-index: 4;
+            display: flex; justify-content: center; align-items: center; font-size: 1.2rem; color: #444; font-weight: bold;
+        }
+        /* 滑动条 */
+        .slider-group { margin-bottom: 25px; text-align: left; }
+        .slider-header { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 2px; color: #888; }
+        .slider-desc { font-size: 0.65rem; color: #555; margin-bottom: 8px; line-height: 1.4; } 
+        .slider-val { font-family: monospace; color: var(--text-color); font-weight: bold; }
+        .chrono-lock.unlocked ~ .slider-visuals .slider-val { color: var(--success-color); }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: var(--text-color); margin-top: -5px; cursor: pointer; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #333; }
+
+        /* --- CH4: 矩阵 --- */
+        .matrix-grid { display: grid; grid-template-columns: repeat(14, 1fr); gap: 2px; width: 100%; max-width: 380px; margin: 0 auto; user-select: none;}
+        .matrix-cell { aspect-ratio: 1; display: flex; justify-content: center; align-items: center; color: #005500; font-weight: bold; font-size: 0.85rem; cursor: pointer; text-shadow: 0 0 2px #003300; }
+        .matrix-cell:hover { color: #00ff00; text-shadow: 0 0 8px #00ff00; }
+        .matrix-cell.error-flash { animation: flashRed 0.5s ease-out; }
+        @keyframes flashRed { 0% { color: #ff0000; text-shadow: 0 0 10px red; } 100% { color: #005500; } }
+        .matrix-cell.selected { color: #ffffff !important; text-shadow: 0 0 10px #ffffff, 0 0 20px #00ff00 !important; pointer-events: none; }
+        .matrix-grid.solved .matrix-cell:not(.selected) { color: #001100; text-shadow: none; pointer-events: none; transition: color 1s ease-out; }
+
+        /* --- CH5: 摩天大楼 (SKYSCRAPERS 5x5) --- */
+        .sky-container { 
+            display: grid; 
+            grid-template-columns: 20px repeat(5, 1fr) 20px; 
+            grid-template-rows: 20px repeat(5, 1fr) 20px; 
+            gap: 4px; 
+            width: 100%; 
+            max-width: 320px; 
+            margin: 0 auto; 
+            user-select: none; 
+        }
+        .sky-clue { display: flex; justify-content: center; align-items: center; color: var(--success-color); font-size: 0.8rem; font-weight: bold; font-family: monospace; }
+        .sky-cell { aspect-ratio: 1; background: #111; border: 1px solid #333; color: #fff; font-size: 1.1rem; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: background 0.2s; font-family: monospace; }
+        .sky-cell:active { background: #333; }
+        .sky-cell.filled { color: #fff; }
+        .sky-cell.empty { color: #333; }
+        
+        .sky-desc { text-align: left; font-size: 0.75rem; color: #888; margin-bottom: 20px; border: 1px solid #333; padding: 10px; background: rgba(0,0,0,0.5); }
+        .sky-desc strong { color: var(--success-color); }
+
+        /* 奖励层 (全局覆盖) */
+        #reward-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.98); z-index: 9999; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+            animation: fadeIn 0.5s;
+        }
+        #reward-img { 
+            max-width: 90%; max-height: 40vh; border: 1px solid #fff; 
+            box-shadow: 0 0 40px rgba(0, 255, 0, 0.2); margin-top: 15px; margin-bottom: 15px; 
+            object-fit: contain;
+        }
+        .reward-coords { font-size: 2.5rem; font-weight: 900; color: var(--success-color); letter-spacing: 5px; text-shadow: 0 0 20px var(--success-color); margin-bottom: 5px; }
+        .reward-subtitle { font-size: 0.9rem; color: #fff; font-weight: bold; margin-bottom: 20px; letter-spacing: 1px; }
+
+        /* 二维码层 (QR CODE) */
+        #qr-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 9998; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+            animation: fadeIn 0.3s;
+        }
+        #qr-code-img { border: 5px solid #fff; margin-bottom: 20px; }
+
+        .error-msg { color: #ff3333; font-size: 0.8rem; opacity: 0; transition: opacity 0.3s; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <button class="btn-share" onclick="showQR()">[ SHARE / 二维码 ]</button>
+
+    <div id="qr-layer" onclick="this.style.display='none'">
+        <img id="qr-code-img" src="" alt="QR CODE">
+        <p style="color:#fff; font-size:0.8rem;">SCAN TO ACCESS ARCHIVES</p>
+        <p style="color:#666; font-size:0.6rem; margin-top:10px;">(Click anywhere to close)</p>
+    </div>
+
+    <div id="reward-layer">
+        <h2 style="color:var(--success-color); margin-bottom:20px; text-shadow:0 0 10px var(--success-color);">>> CITY RESTORED <<</h2>
+        <div class="reward-coords">7 , 4</div>
+        <img src="speaker.jpg" id="reward-img" alt="[图片加载中...]" onerror="this.src='https://via.placeholder.com/300x200?text=SPEAKER+IMAGE';">
+        <div class="reward-subtitle">[ MARSHALL EMBERTON ]</div>
+        <button class="btn-start" style="width: 80%; max-width: 300px; background: var(--success-color); color: #000; border: none;" onclick="goToFinal()">>> 进入终章</button>
+    </div>
+
+    <div class="container">
+        <div class="decoration-line line-top"></div>
+        <div class="decoration-line line-bottom"></div>
+
+        <div id="intro-page" class="page-section active-section">
+            <h1>THE EXPERIENCE</h1>
+            <div class="intro-text" style="font-size: 0.9rem; line-height: 1.6; text-align: justify;">
+                <p>我们这一生真正拥有的，从来不是任何物体，而是流经我们身体的感觉。</p>
+                <p>那些被海风吹过的粗砺，被建筑切割的光影，以及在静默中无限放大的共振，才构成了生命的实体。</p>
+                <p>在接下来的九十六小时里，无需为未知的下一秒而紧绷。</p>
+                <p>你只管步入这片风景，做个纯粹的——<strong>“体验者”</strong>。</p>
+            </div>
+            <button class="btn-start" onclick="nextPage('intro-page', 'login-page')">>> START CALIBRATION</button>
+        </div>
+
+        <div id="login-page" class="page-section">
+            <h1>COGNITIVE CALIBRATION</h1>
+            <div class="quadrant-grid">
+                <div class="quadrant"><h3>DIMENSION I</h3><p>垂直维度的未知。<br>哲学家的发问。<br>染色体因子。</p></div>
+                <div class="quadrant"><h3>DIMENSION II</h3><p>流动的物质。<br>罗盘的南方。<br>蓝色疆域。</p></div>
+                <div class="quadrant"><h3>DIMENSION III</h3><p>自然对数底数。<br>日出的方位。<br>能量源头。</p></div>
+                <div class="quadrant"><h3>DIMENSION IV</h3><p>字母表的开端。<br>计数的起点。<br>此地的首字母。</p></div>
+            </div>
+            <div class="input-area">
+                <input type="text" id="passcode" maxlength="4" placeholder="_ _ _ _">
+                <br><div class="error-msg" id="login-error">ACCESS DENIED</div>
+                <button class="btn-start" onclick="checkLogin()">VERIFY</button>
+            </div>
+        </div>
+
+        <div id="map-page" class="page-section">
+            <h1>THE MAP</h1>
+            <div class="map-container">
+                <p style="text-align: center; font-size: 0.8rem; color: #aaa; margin-bottom: 10px;">DATA ACQUIRED // 地图档案已捕获</p>
+                <div class="map-placeholder">
+                    <img src="map.jpg" alt="[ 地图加载中... ]" class="map-img" onerror="this.style.display='none'; this.parentNode.innerText='[系统提示: 请将地图图片命名为 map.jpg]'">
+                </div>
+                <p style="font-size: 0.7rem; text-align: center; color: #666; margin-top: 10px;">长按上方图片保存至本地终端。</p>
+                
+                <div style="margin-top: 25px; border: 1px dashed #333; padding: 15px; text-align: left; background: rgba(255,255,255,0.03);">
+                    <pre style="font-size: 0.6rem; color: var(--success-color); line-height: 10px; margin-bottom: 10px; font-weight: bold;">
+      / \__
+     (    @\___
+     /         O
+    /   (_____/
+   /_____/   U
+                    </pre>
+                    <p style="font-size: 0.75rem; color: #ccc; font-family: sans-serif; line-height: 1.6;">
+                        <strong>[ 最后的盲区指引 ]</strong><br>
+                        在庞大的数据洪流中，有一位沉默的观察者。<br>
+                        它不需要GPS，只凭借本能的爱意导航。<br>
+                        当你迷失时，跟随那个摇曳的尾巴。
+                    </p>
+                </div>
+                
+                <br>
+                <button class="btn-start" style="background: var(--text-color); color: var(--bg-color);" onclick="nextPage('map-page', 'transition-page')">>> 确认并进入档案库</button>
+            </div>
+        </div>
+
+        <div id="transition-page" class="page-section">
+            <div style="height: 60vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                <p style="font-size: 0.8rem; color: #666; letter-spacing: 5px; margin-bottom: 20px;">INITIATING SEQUENCE...</p>
+                <h1 style="font-size: 2.5rem; border: none; font-weight: 900; letter-spacing: 5px; color: #fff; text-shadow: 0 0 20px #fff;">体验之旅</h1>
+                <p style="font-size: 1rem; color: #aaa; letter-spacing: 3px; margin-top: 10px; font-family: sans-serif;">THE JOURNEY BEGINS</p>
+                <div style="margin-top: 60px; width: 100%;">
+                    <button class="btn-start" onclick="nextPage('transition-page', 'archive-dashboard')">>> ENTER ARCHIVES</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="archive-dashboard" class="page-section">
+            <h1>THE ARANYA CHRONICLES</h1>
+            <ul class="chapter-list">
+                <li class="chapter-item" id="item-1" onclick="openModal(1)"><div><strong>CHAPTER 01</strong><br><span style="font-size:0.7rem;color:#888;">THE ANCHOR / 锚点</span></div><div class="status" id="status-1">ACTIVE</div></li>
+                <li class="chapter-item locked" id="item-2" onclick="checkLock(2)"><div><strong>CHAPTER 02</strong><br><span style="font-size:0.7rem;color:#555;">CHRONO LOCK / 时空锁</span></div><div class="status" id="status-2">LOCKED</div></li>
+                <li class="chapter-item locked" id="item-3" onclick="checkLock(3)"><div><strong>CHAPTER 03</strong><br><span style="font-size:0.7rem;color:#555;">THE RED ARCHIVE / 红色档案</span></div><div class="status" id="status-3">LOCKED</div></li>
+                <li class="chapter-item locked" id="item-4" onclick="checkLock(4)"><div><strong>CHAPTER 04</strong><br><span style="font-size:0.7rem;color:#555;">THE RESONANCE / 回响</span></div><div class="status" id="status-4">LOCKED</div></li>
+                <li class="chapter-item locked" id="item-5" onclick="checkLock(5)"><div><strong>CHAPTER 05</strong><br><span style="font-size:0.7rem;color:#555;">CITY SKYLINE / 天际线</span></div><div class="status" id="status-5">LOCKED</div></li>
+            </ul>
+        </div>
+
+        <div id="final-page" class="page-section" style="text-align: center; height: 80vh; display: none; flex-direction: column; justify-content: center; align-items: center;">
+            <h1 style="border:none; letter-spacing: 5px; font-size: 2rem; margin-bottom: 50px;">HAPPY BIRTHDAY</h1>
+            
+            <div style="width: 100px; height: 1px; background: #333; margin: 0 auto 50px auto;"></div>
+
+            <p style="font-size: 1.2rem; font-weight: bold; color: var(--success-color); letter-spacing: 3px; font-family: sans-serif;">
+                我爱你。
+            </p>
+            
+            <p style="font-size: 0.7rem; color: #444; margin-top: 60px; letter-spacing: 2px;">
+                - MISSION ACCOMPLISHED -
+            </p>
+        </div>
+
+    </div>
+
+    <div id="modal-1" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal(1)">×</span>
+            <h1>CHAPTER 01</h1>
+            <div class="puzzle-visual" style="border: none; text-align: left; font-size: 0.85rem; line-height: 1.6;">
+                <p style="border-bottom: 1px dashed #333; padding-bottom: 15px; margin-bottom: 20px; text-align: center;"><strong>[ X轴：数据流 ]</strong><br><br><span style="font-family: monospace; font-size: 1.2rem; letter-spacing: 2px; color: var(--success-color); font-weight: bold;">05 - 09 - 07 - 08 - 20</span></p>
+                <p style="text-align: center; margin-bottom: 15px;"><strong>[ Y轴：数据重构 ]</strong></p>
+                <div style="margin-bottom: 20px;">
+                    <p style="color: #888; font-size: 0.75rem; margin-bottom: 5px;">// 阶段一</p>
+                    <p style="font-style: italic; padding-left: 10px; border-left: 2px solid var(--dim-color);">“我是天空中的悖论。<br>我飞行，却由‘未知’定义。<br>一旦被识别，我就失去了名字。”</p>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <p style="color: #888; font-size: 0.75rem; margin-bottom: 5px;">// 阶段二</p>
+                    <p style="font-style: italic; padding-left: 10px; border-left: 2px solid var(--dim-color);">“我是扭转的环。<br>我不分内与外。<br>请计算我的‘面’数。”</p>
+                </div>
+                <p style="border-top: 1px solid #333; padding-top: 15px; color: var(--text-color); font-size: 0.8rem; margin-top: 20px;">
+                    <strong>> 解密指令：</strong><br>将主体代码 (Phase I) 按密钥数值 (Phase II) 向前回推。<br><span style="color: #888; font-size: 0.75rem; margin-top: 5px; display: block;">(注：阶段一的主体代码为 3 个字母)</span>
+                </p>
+                <div style="margin-top: 30px; border-top: 1px dashed #444; padding-top: 15px; font-size: 0.75rem; color: #777; font-family: sans-serif;">
+                    <p style="font-family: var(--font-main); margin-bottom: 5px; color: #555;">// 辅助校准协议 (BACKUP PROTOCOL)</p>
+                    <p>如果理性的计算失效，请回顾序章的密钥。<br>那个名字，不仅是密码，也是地图上唯一的指引。</p>
+                    <p style="font-style: italic; margin-top: 5px; color: #555;">Hint: Look for the name on your map.</p>
+                </div>
+            </div>
+            <div class="input-area">
+                <input type="text" id="ans-1" placeholder="X, Y">
+                <button class="btn-start" onclick="verify(1, '810', 2)">CONFIRM</button>
+                <div class="error-msg" id="err-1">MISMATCH</div>
+            </div>
+            <button class="btn-back" onclick="closeModal(1)">&#60;&#60; RETURN TO ARCHIVES</button>
+        </div>
+    </div>
+
+    <div id="modal-2" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal(2)">×</span>
+            <h1>CHAPTER 02</h1>
+            <p style="font-size: 0.8rem; color: #888; margin-bottom: 20px;">摘要：时间轴校准</p>
+            <div class="puzzle-visual" style="border: none; padding: 0;">
+                <p style="font-size: 0.85rem; text-align: center; margin-bottom: 30px; line-height: 1.6; color: #aaa;">[ 距离归零协议 ]<br>请回拨时间的齿轮，锁定那个瞬间。</p>
+                <div class="chrono-lock" id="main-lock">
+                    <div class="ring ring-outer" id="ring-outer"></div>
+                    <div class="ring ring-middle" id="ring-middle"></div>
+                    <div class="ring ring-inner" id="ring-inner"></div>
+                    <div class="lock-core" id="lock-core">LOCK</div>
+                </div>
+                <div class="slider-visuals">
+                    <div class="slider-group">
+                        <div class="slider-header"><span>OUTER RING (YEAR)</span><span class="slider-val" id="disp-year">2020</span></div>
+                        <p class="slider-desc">寻找那个改变命运的年份。</p>
+                        <input type="range" min="2020" max="2030" value="2020" id="in-year" oninput="updateLock()">
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-header"><span>MIDDLE RING (MONTH)</span><span class="slider-val" id="disp-month">01</span></div>
+                        <p class="slider-desc">只有在那个盛夏的月份，通道才会开启。</p>
+                        <input type="range" min="1" max="12" value="1" id="in-month" oninput="updateLock()">
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-header"><span>INNER RING (DAY)</span><span class="slider-val" id="disp-day">01</span></div>
+                        <p class="slider-desc">在启程之日，轨迹重合。</p>
+                        <input type="range" min="1" max="31" value="1" id="in-day" oninput="updateLock()">
+                    </div>
+                </div>
+            </div>
+            <div class="input-area">
+                <p style="font-size:0.7rem; margin-bottom: 5px;">CALCULATE COORDINATES</p>
+                <div style="font-size: 0.65rem; color: #666; margin-bottom: 10px;">HINT I: 年份的尾数<br>HINT II: 日期的归一</div>
+                <input type="text" id="ans-2" placeholder="X, Y">
+                <button class="btn-start" onclick="verify(2, '410', 3)">CONFIRM</button>
+                <div class="error-msg" id="err-2">MISMATCH</div>
+            </div>
+            <button class="btn-back" onclick="closeModal(2)">&#60;&#60; RETURN TO ARCHIVES</button>
+        </div>
+    </div>
+
+    <div id="modal-3" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal(3)">×</span>
+            <h1>CHAPTER 03</h1>
+            <p style="font-size: 0.8rem; color: #888; margin-bottom: 30px;">摘要：跨次元通讯</p>
+            <div class="puzzle-visual" style="border: 1px solid #333; background: #000; padding: 50px 20px;">
+                <div style="margin-bottom: 50px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                    <div style="font-family: 'Courier New', monospace; font-size: 1.8rem; font-weight: 900; letter-spacing: 2px; color: var(--text-color);">#FF2442</div>
+                    <div style="font-size: 6rem;">📖</div>
+                </div>
+                <div style="border-top: 1px dashed #333; padding-top: 30px; margin-top: 30px;">
+                    <p style="font-size: 0.9rem; line-height: 2; color: #ccc; text-align: center; font-family: sans-serif;">无需检索名字，它是匿名的伪装者。<br>新的信号已置顶。<br>请注视——<span style="color: #fff; border-bottom: 1px solid #555;">最顶端</span>。</p>
+                </div>
+            </div>
+            <div class="input-area">
+                <p style="font-size: 0.65rem; color: #666; margin-bottom: 10px;">Hint: Check the latest post.</p>
+                <input type="text" id="ans-3" placeholder="X, Y">
+                <button class="btn-start" onclick="verify(3, '39', 4)">CONFIRM</button>
+                <div class="error-msg" id="err-3">MISMATCH</div>
+            </div>
+            <button class="btn-back" onclick="closeModal(3)">&#60;&#60; RETURN TO ARCHIVES</button>
+        </div>
+    </div>
+
+    <div id="modal-4" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal(4)">×</span>
+            <h1>CHAPTER 04</h1>
+            <p style="font-size: 0.8rem; color: #888; margin-bottom: 20px;">摘要：身份认证</p>
+            <div class="puzzle-visual" style="border: 1px solid #333; background: #000; padding: 20px 10px; display: flex; flex-direction: column; align-items: center;">
+                <p style="color: var(--success-color); font-size: 0.9rem; margin-bottom: 15px; letter-spacing: 2px;">> INITIATING SCAN...</p>
+                <p style="color: #fff; font-size: 1rem; font-weight: bold; margin-bottom: 25px; letter-spacing: 3px;">[ 我看到你 ]</p>
+                <div id="matrix-grid" class="matrix-grid"></div>
+                <div id="matrix-result" style="display: none; margin-top: 25px; color: var(--success-color); text-align: center;">
+                    <p style="font-size: 1.2rem; font-weight: bold; letter-spacing: 2px;">>> IDENTITY CONFIRMED <<</p>
+                    <p style="margin-top: 10px; font-size: 0.9rem;">COORDINATES ACQUIRED: 10, 6</p>
+                </div>
+            </div>
+            <div class="input-area" id="final-input-area" style="margin-top: 20px;">
+                <p style="font-size: 0.65rem; color: #666; margin-bottom: 10px;">Hint: Decrypt the matrix.</p>
+                <input type="text" id="ans-4" placeholder="X, Y">
+                <button class="btn-start" onclick="verify(4, '106', 5)">CONFIRM</button>
+                <div class="error-msg" id="err-4">MISMATCH</div>
+            </div>
+            <button class="btn-back" onclick="closeModal(4)">&#60;&#60; RETURN TO ARCHIVES</button>
+        </div>
+    </div>
+
+    <div id="modal-5" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal(5)">×</span>
+            <h1>CHAPTER 05</h1>
+            <p style="font-size: 0.8rem; color: #888; margin-bottom: 20px;">摘要：空间重构 (SKYLINES)</p>
+            
+            <div class="puzzle-visual" style="border: none; padding: 0;">
+                
+                <div class="sky-desc">
+                    <strong>[ 规则 / RULES ]</strong><br>
+                    1. 这是一个 5x5 的城市俯视图。<br>
+                    2. 填入数字 <strong>1-5</strong> 代表楼高。<br>
+                    3. 每一行、每一列的数字不能重复。<br>
+                    4. <strong>外围数字</strong> = 从该方向看去，能看到的高楼数量。<br>
+                    <span style="color:#666; font-size:0.65rem;">(点击格子切换数字 1-5)</span>
+                </div>
+
+                <div class="sky-container">
+                    <div></div> <div class="sky-clue">2</div> <div class="sky-clue">2</div> <div class="sky-clue">2</div> <div class="sky-clue">3</div> <div class="sky-clue">1</div> <div></div>
+                    
+                    <div class="sky-clue">2</div> 
+                    <div class="sky-cell empty" onclick="cycleSky(0,0)"></div> <div class="sky-cell empty" onclick="cycleSky(0,1)"></div> <div class="sky-cell empty" onclick="cycleSky(0,2)"></div> <div class="sky-cell empty" onclick="cycleSky(0,3)"></div> <div class="sky-cell empty" onclick="cycleSky(0,4)"></div> 
+                    <div class="sky-clue">1</div>
+
+                    <div class="sky-clue">2</div> 
+                    <div class="sky-cell empty" onclick="cycleSky(1,0)"></div> <div class="sky-cell empty" onclick="cycleSky(1,1)"></div> <div class="sky-cell empty" onclick="cycleSky(1,2)"></div> <div class="sky-cell empty" onclick="cycleSky(1,3)"></div> <div class="sky-cell empty" onclick="cycleSky(1,4)"></div> 
+                    <div class="sky-clue">3</div>
+
+                    <div class="sky-clue">2</div> 
+                    <div class="sky-cell empty" onclick="cycleSky(2,0)"></div> <div class="sky-cell empty" onclick="cycleSky(2,1)"></div> <div class="sky-cell empty" onclick="cycleSky(2,2)"></div> <div class="sky-cell empty" onclick="cycleSky(2,3)"></div> <div class="sky-cell empty" onclick="cycleSky(2,4)"></div> 
+                    <div class="sky-clue">3</div>
+
+                    <div class="sky-clue">1</div> 
+                    <div class="sky-cell empty" onclick="cycleSky(3,0)"></div> <div class="sky-cell empty" onclick="cycleSky(3,1)"></div> <div class="sky-cell empty" onclick="cycleSky(3,2)"></div> <div class="sky-cell empty" onclick="cycleSky(3,3)"></div> <div class="sky-cell empty" onclick="cycleSky(3,4)"></div> 
+                    <div class="sky-clue">2</div>
+
+                    <div class="sky-clue">2</div> 
+                    <div class="sky-cell empty" onclick="cycleSky(4,0)"></div> <div class="sky-cell empty" onclick="cycleSky(4,1)"></div> <div class="sky-cell empty" onclick="cycleSky(4,2)"></div> <div class="sky-cell empty" onclick="cycleSky(4,3)"></div> <div class="sky-cell empty" onclick="cycleSky(4,4)"></div> 
+                    <div class="sky-clue">2</div>
+
+                    <div></div> <div class="sky-clue">2</div> <div class="sky-clue">1</div> <div class="sky-clue">3</div> <div class="sky-clue">1</div> <div class="sky-clue">2</div> <div></div>
+                </div>
+
+            </div>
+            
+            <div class="input-area" style="margin-top: 15px;">
+                <p style="font-size:0.6rem; color:#444;">(备用通道：直接输入 7,4)</p>
+                <input type="text" id="ans-5" placeholder="X, Y">
+                <button class="btn-start" onclick="verify(5, '74', 6)">CONFIRM</button>
+            </div>
+
+            <button class="btn-back" onclick="closeModal(5)">&#60;&#60; RETURN TO ARCHIVES</button>
+
+        </div>
+    </div>
+
+    <script>
+        // === 存档系统 V18 (QR + NAV) ===
+        const SAVE_KEY_LOGIN = 'aranya_login_v18_final';
+        const SAVE_KEY_LEVEL = 'aranya_level_v18_final';
+
+        // 强力跳转逻辑
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('reset') === 'true') {
+                localStorage.clear();
+                window.location.href = window.location.pathname; 
+                return;
+            }
+
+            const hasLogin = localStorage.getItem(SAVE_KEY_LOGIN);
+            const maxLevel = parseInt(localStorage.getItem(SAVE_KEY_LEVEL)) || 1;
+
+            if (hasLogin === 'true') {
+                const ids = ['intro-page', 'login-page', 'map-page', 'transition-page'];
+                ids.forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) { el.style.display = 'none'; el.classList.remove('active-section'); }
+                });
+                const dashboard = document.getElementById('archive-dashboard');
+                dashboard.style.display = 'block'; dashboard.classList.add('active-section');
+                restoreLevelState(maxLevel);
+            } else {
+                document.getElementById('intro-page').style.display = 'block';
+            }
+        };
+
+        // 二维码逻辑
+        function showQR() {
+            const currentUrl = window.location.href;
+            const apiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(currentUrl);
+            document.getElementById('qr-code-img').src = apiUrl;
+            document.getElementById('qr-layer').style.display = 'flex';
+        }
+
+        function restoreLevelState(maxLevel) {
+            for (let i = 1; i < 6; i++) {
+                const item = document.getElementById('item-' + i);
+                const status = document.getElementById('status-' + i);
+                if (i < maxLevel) {
+                    item.classList.remove('locked'); item.classList.add('unlocked');
+                    item.style.borderColor = '#00ff00';
+                    status.innerText = "CLEARED"; status.style.color = '#00ff00';
+                } else if (i === maxLevel) {
+                    if(i>1) { item.classList.remove('locked'); item.classList.add('unlocked'); status.innerText = "UNLOCKED"; }
+                }
+            }
+        }
+
+        function nextPage(current, next) {
+            document.getElementById(current).style.display = 'none';
+            document.getElementById(next).style.display = 'block';
+            if(next === 'archive-dashboard') {
+                const maxLevel = parseInt(localStorage.getItem(SAVE_KEY_LEVEL)) || 1;
+                restoreLevelState(maxLevel);
+            }
+        }
+
+        function goToFinal() {
+            document.getElementById('reward-layer').style.display = 'none';
+            document.getElementById('modal-5').style.display = 'none';
+            document.getElementById('archive-dashboard').style.display = 'none';
+            document.querySelector('.btn-share').style.display = 'none'; // 隐藏分享按钮
+            const finalPage = document.getElementById('final-page');
+            finalPage.style.display = 'flex'; 
+            finalPage.classList.add('active-section');
+        }
+
+        function checkLogin() {
+            const val = document.getElementById('passcode').value.toUpperCase();
+            if(val === 'YSEA') {
+                localStorage.setItem(SAVE_KEY_LOGIN, 'true');
+                if(!localStorage.getItem(SAVE_KEY_LEVEL)) localStorage.setItem(SAVE_KEY_LEVEL, '1');
+                nextPage('login-page', 'map-page');
+            } else {
+                showError('login-error');
+            }
+        }
+
+        function verify(id, correct, unlockId) {
+            const input = document.getElementById('ans-'+id).value;
+            const clean = input.replace(/[^0-9]/g, '');
+            if(clean === correct) {
+                if(id === 5) {
+                    showReward();
+                } else {
+                    closeModal(id);
+                    const currentItem = document.getElementById('item-'+id);
+                    currentItem.style.borderColor = '#00ff00';
+                    document.getElementById('status-'+id).innerText = "CLEARED";
+                    document.getElementById('status-'+id).style.color = '#00ff00';
+                    const nextItem = document.getElementById('item-'+unlockId);
+                    if(nextItem) {
+                        nextItem.classList.remove('locked'); nextItem.classList.add('unlocked');
+                        document.getElementById('status-'+unlockId).innerText = "UNLOCKED";
+                        alert("CHAPTER 0" + unlockId + " 已解锁。");
+                    }
+                    const currentRecord = parseInt(localStorage.getItem(SAVE_KEY_LEVEL)) || 1;
+                    if (unlockId > currentRecord) localStorage.setItem(SAVE_KEY_LEVEL, unlockId);
+                }
+            } else {
+                showError('err-'+id);
+            }
+        }
+
+        function showError(id) {
+            const el = document.getElementById(id);
+            if(el) { el.style.opacity = '1'; setTimeout(() => { el.style.opacity = '0'; }, 2000); }
+        }
+
+        function openModal(id) { 
+            document.getElementById('modal-'+id).style.display = 'block';
+            if(id === 4) initMatrix();
+        }
+        function closeModal(id) { document.getElementById('modal-'+id).style.display = 'none'; }
+        
+        function checkLock(id) {
+            const item = document.getElementById('item-'+id);
+            if(item.classList.contains('locked')) alert("ACCESS DENIED.\n请先完成上一章节。");
+            else openModal(id);
+        }
+
+        function updateLock() {
+            const y = parseInt(document.getElementById('in-year').value);
+            const m = parseInt(document.getElementById('in-month').value);
+            const d = parseInt(document.getElementById('in-day').value);
+            document.getElementById('disp-year').innerText = y;
+            document.getElementById('disp-month').innerText = (m < 10 ? '0' : '') + m;
+            document.getElementById('disp-day').innerText = (d < 10 ? '0' : '') + d;
+            document.getElementById('ring-outer').style.transform = `rotate(${y * 12}deg)`;
+            document.getElementById('ring-middle').style.transform = `rotate(${m * 45}deg)`;
+            document.getElementById('ring-inner').style.transform = `rotate(${d * 20}deg)`;
+            const isAllCorrect = (y === 2024 && m === 8 && d === 19);
+            const lockContainer = document.getElementById('main-lock');
+            const core = document.getElementById('lock-core');
+            if (isAllCorrect) { lockContainer.classList.add('unlocked'); core.innerText = "OPEN"; } 
+            else { lockContainer.classList.remove('unlocked'); core.innerText = "LOCK"; }
+        }
+
+        function initMatrix() {
+            const grid = document.getElementById('matrix-grid');
+            const resultArea = document.getElementById('matrix-result');
+            grid.innerHTML = ''; grid.classList.remove('solved'); resultArea.style.display = 'none';
+            let clickSequence = 0; 
+            const targetWord = "MODERN";
+            let matrixData = [];
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            for (let i = 0; i < 196; i++) matrixData.push({ char: chars.charAt(Math.floor(Math.random() * chars.length)), isTarget: false, targetIndex: -1 });
+            const startRow = Math.floor(Math.random() * (14 - targetWord.length));
+            const startCol = Math.floor(Math.random() * 8) + 3; 
+            for (let i = 0; i < targetWord.length; i++) {
+                const index = (startRow + i) * 14 + startCol;
+                matrixData[index].char = targetWord[i];
+                matrixData[index].isTarget = true;
+                matrixData[index].targetIndex = i;
+            }
+            matrixData.forEach((data) => {
+                const cell = document.createElement('div');
+                cell.classList.add('matrix-cell');
+                cell.innerText = data.char;
+                cell.onclick = () => {
+                    if (grid.classList.contains('solved') || cell.classList.contains('selected')) return;
+                    if (data.isTarget && data.targetIndex === clickSequence) {
+                        cell.classList.add('selected'); clickSequence++;
+                        if (clickSequence === targetWord.length) { grid.classList.add('solved'); setTimeout(() => { resultArea.style.display = 'block'; }, 800); }
+                    } else {
+                        clickSequence = 0; document.querySelectorAll('.matrix-cell.selected').forEach(c => c.classList.remove('selected'));
+                        cell.classList.add('error-flash'); setTimeout(() => cell.classList.remove('error-flash'), 500);
+                    }
+                };
+                grid.appendChild(cell);
+            });
+        }
+
+        // === CH5 SKYSCRAPERS 5x5 LOGIC ===
+        const SKY_SOLUTION = [
+            [2, 1, 4, 3, 5],
+            [4, 3, 5, 2, 1],
+            [1, 5, 2, 4, 3],
+            [5, 2, 3, 1, 4],
+            [3, 4, 1, 5, 2]
+        ];
+        
+        let skyState = [
+            [0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0]
+        ];
+
+        function cycleSky(r, c) {
+            if(document.getElementById('reward-layer').style.display === 'flex') return;
+            
+            skyState[r][c] = (skyState[r][c] + 1) % 6;
+            
+            const cellIndex = r * 5 + c;
+            const cells = document.querySelectorAll('.sky-cell');
+            const targetCell = cells[cellIndex];
+            
+            if(skyState[r][c] === 0) {
+                targetCell.innerText = '';
+                targetCell.classList.remove('filled');
+                targetCell.classList.add('empty');
+            } else {
+                targetCell.innerText = skyState[r][c];
+                targetCell.classList.remove('empty');
+                targetCell.classList.add('filled');
+            }
+            checkSkyWin();
+        }
+
+        function checkSkyWin() {
+            for(let r=0; r<5; r++) {
+                for(let c=0; c<5; c++) {
+                    if(skyState[r][c] !== SKY_SOLUTION[r][c]) return;
+                }
+            }
+            setTimeout(showReward, 500);
+        }
+
+        function showReward() {
+            document.getElementById('reward-layer').style.display = 'flex';
+            document.getElementById('item-5').style.borderColor = '#00ff00';
+            document.getElementById('status-5').innerText = "CLEARED";
+            document.getElementById('status-5').style.color = '#00ff00';
+            localStorage.setItem(SAVE_KEY_LEVEL, '6');
+        }
+    </script>
+</body>
+</html>
