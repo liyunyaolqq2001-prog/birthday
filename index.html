@@ -72,7 +72,7 @@
         }
         .btn-start:hover { background: var(--text-color); color: var(--bg-color); }
 
-        /* BACK BUTTON (NEW) */
+        /* BACK BUTTON */
         .btn-back {
             display: block; width: 100%; padding: 10px;
             background: transparent; border: none;
@@ -83,7 +83,7 @@
         }
         .btn-back:hover { color: #fff; }
 
-        /* SHARE BUTTON (NEW) */
+        /* SHARE BUTTON */
         .btn-share {
             position: absolute; top: 10px; right: 10px;
             border: 1px solid #333; background: #000; color: #888;
@@ -324,6 +324,7 @@
                 <li class="chapter-item locked" id="item-4" onclick="checkLock(4)"><div><strong>CHAPTER 04</strong><br><span style="font-size:0.7rem;color:#555;">THE RESONANCE / 回响</span></div><div class="status" id="status-4">LOCKED</div></li>
                 <li class="chapter-item locked" id="item-5" onclick="checkLock(5)"><div><strong>CHAPTER 05</strong><br><span style="font-size:0.7rem;color:#555;">CITY SKYLINE / 天际线</span></div><div class="status" id="status-5">LOCKED</div></li>
             </ul>
+            <button class="btn-back" style="margin-top: 30px; border-style: solid; text-align: center;" onclick="viewMap()">[ VIEW MAP / 查看地图 ]</button>
         </div>
 
         <div id="final-page" class="page-section" style="text-align: center; height: 80vh; display: none; flex-direction: column; justify-content: center; align-items: center;">
@@ -511,7 +512,6 @@
             </div>
             
             <div class="input-area" style="margin-top: 15px;">
-                <p style="font-size:0.6rem; color:#444;">(备用通道：直接输入 7,4)</p>
                 <input type="text" id="ans-5" placeholder="X, Y">
                 <button class="btn-start" onclick="verify(5, '74', 6)">CONFIRM</button>
             </div>
@@ -522,9 +522,9 @@
     </div>
 
     <script>
-        // === 存档系统 V18 (QR + NAV) ===
-        const SAVE_KEY_LOGIN = 'aranya_login_v18_final';
-        const SAVE_KEY_LEVEL = 'aranya_level_v18_final';
+        // === 存档系统 V21 (GOD MODE + NO SPOILER + MAP RETURN) ===
+        const SAVE_KEY_LOGIN = 'aranya_login_v21_final';
+        const SAVE_KEY_LEVEL = 'aranya_level_v21_final';
 
         // 强力跳转逻辑
         window.onload = function() {
@@ -551,6 +551,12 @@
                 document.getElementById('intro-page').style.display = 'block';
             }
         };
+
+        // 新增：返回地图功能
+        function viewMap() {
+            document.getElementById('archive-dashboard').style.display = 'none';
+            document.getElementById('map-page').style.display = 'block';
+        }
 
         // 二维码逻辑
         function showQR() {
@@ -596,10 +602,21 @@
         function checkLogin() {
             const val = document.getElementById('passcode').value.toUpperCase();
             if(val === 'YSEA') {
+                // 普通玩家模式
                 localStorage.setItem(SAVE_KEY_LOGIN, 'true');
+                localStorage.removeItem('aranya_debug'); // 确保清除debug标志
                 if(!localStorage.getItem(SAVE_KEY_LEVEL)) localStorage.setItem(SAVE_KEY_LEVEL, '1');
                 nextPage('login-page', 'map-page');
-            } else {
+            } 
+            else if (val === 'ROOT') {
+                // 上帝模式
+                localStorage.setItem(SAVE_KEY_LOGIN, 'true');
+                localStorage.setItem(SAVE_KEY_LEVEL, '6'); // 全解锁
+                localStorage.setItem('aranya_debug', 'true'); // 开启无视时间锁
+                alert(">> GOD MODE ACTIVATED <<\n所有关卡已解锁。\n时间封印已解除。");
+                nextPage('login-page', 'map-page');
+            }
+            else {
                 showError('login-error');
             }
         }
@@ -641,8 +658,22 @@
         }
         function closeModal(id) { document.getElementById('modal-'+id).style.display = 'none'; }
         
+        // --- 核心修改：TIME LOCK (时间锁) ---
         function checkLock(id) {
             const item = document.getElementById('item-'+id);
+            const isDebug = localStorage.getItem('aranya_debug') === 'true'; // 检查是否是上帝模式
+            
+            // 针对第二关的时间检查
+            if (id === 2 && !isDebug) { // 如果不是上帝模式，才检查时间
+                const unlockDate = new Date('2026-01-09T00:00:00'); // 设定解锁时间：2026年1月9日
+                const now = new Date();
+                
+                if (now < unlockDate) {
+                    alert("⚠️ 时间封印\n\n根据时空协议，该档案将于 2026年1月9日 解封。\n请耐心等待时间流逝...");
+                    return; // 阻止后续代码执行
+                }
+            }
+
             if(item.classList.contains('locked')) alert("ACCESS DENIED.\n请先完成上一章节。");
             else openModal(id);
         }
@@ -751,5 +782,4 @@
         }
     </script>
 </body>
-
 </html>
